@@ -8,7 +8,7 @@
 ; | Main |
 ; +------+
 	#NoEnv ; Recommended for performance and compatibility with future AutoHotkey releases.
-	#Warn ; Enable warnings to assist with detecting common errors. To use only in debug
+	;#Warn ; Enable warnings to assist with detecting common errors. To use only in debug
 	SendMode Input ; Recommended for new scripts due to its superior speed and reliability.
 	SetWorkingDir %A_ScriptDir% ; Ensures a consistent starting directory.
 	#Persistent ; only one copy running allowed
@@ -20,6 +20,9 @@
 	; config
 	Gosub, Config
 
+	; setup
+	Gosub, Setup
+
 	; setup tray menu
 	Gosub, SetupTrayMenu
 
@@ -29,13 +32,10 @@
 	; TrayTip
 	TrayTip, digiLog4OM, digiLog4OM © IZ3XNJ, %traySecs%, 17
 
-
 	if !IsAppRunning(true)
 		ExitApp
 	else
 	{
-		; setup
-		gosub, Setup
 
 		; start
 		Gosub, StartDB
@@ -50,10 +50,11 @@
 		; events
 		if (isFldigi())
 			OnClipboardChange("ClipChanged")
+		
 		OnExit, EndApp
 		
 		; timer
-		SetTimer, CtrlApps, 5000
+		SetTimer, CtrlApps, 10000
 		
 		; read frequency for the first time
 		if (autoSound = "Y")
@@ -224,7 +225,12 @@ return
 ; | EndApp |
 ; +--------+
 EndApp:
+	
+	; delete timer
+	SetTimer, CtrlApps, Delete 
+
 	gosub, Shutdown
+	
 	if (flgChangedMode)
 	{
 		Gosub, ReadFreq
@@ -235,10 +241,9 @@ EndApp:
 			;PM_SSB_U = 33554432 (&H2000000)
 			Rig.Mode := 33554432	
 	}	
+	
 	Gosub, StopOmniRig
 
-	; delete timer
-	SetTimer, CtrlApps, Delete 
 	ExitApp
 return
 
@@ -283,6 +288,7 @@ IsAppRunning(bMsg)
 					Gosub, Shutdown
 				return false
 			}
+
 		if (isJtAlert())
 			; check if jtAlert is running
 			IfWinNotExist, %lblJtAlert%
@@ -876,16 +882,19 @@ isJtAlert()
 ; +-------------+
 SetupLog4OM:
 
-	InputBox, yourCall, digiLog4OM © IZ3XNJ, digiLog4OM © IZ3XNJ`nYour Callsign?
-	if (yourCall="")
+	if (yourCall = "")
 	{
-		MsgBox, 16, digiLog4OM © IZ3XNJ, digiLog4OM © IZ3XNJ`nNo Callsign entered.
-		ExitApp
-	}
+		InputBox, yourCall, digiLog4OM © IZ3XNJ, digiLog4OM © IZ3XNJ`nYour Callsign?
+		if (yourCall = "")
+		{
+			MsgBox, 16, digiLog4OM © IZ3XNJ, digiLog4OM © IZ3XNJ`nNo Callsign entered.
+			ExitApp
+		}
 
-	StringUpper, yourCall, yourCall
-	; yourCall
-	IniWrite, %yourCall%, digiLog4OM.ini, config, yourCall
+		StringUpper, yourCall, yourCall
+		; yourCall
+		IniWrite, %yourCall%, digiLog4OM.ini, config, yourCall
+	}
 	
 	MsgBox, 32, digiLog4OM © IZ3XNJ, digiLog4OM © IZ3XNJ`nWrite your own callsign %yourCall% into Log4OM callsign field`nand then click OK here
 	
@@ -894,13 +903,19 @@ SetupLog4OM:
 	{
 		; this is callsign field, as it contains  your call sign
 		MsgBox, 64, digiLog4OM © IZ3XNJ, digiLog4OM © IZ3XNJ`nCallsign field OK
+
+		; activates the window  and makes it foremost
+		WinActivate, %lblLog4OM% 
+		; click CLR button to clear previous call
+		ControlClick, CLR, %lblLog4OM% 
+		
 		flgCallsignOk := true
 		IniWrite, %clsNNCall%, digiLog4OM.ini, config, clsNNCall
 		gosub, ReReadIni
 	}
 	else
 	{
-		MsgBox, 16, digiLog4OM © IZ3XNJ, digiLog4OM © IZ3XNJ`nSetup Callsign KO
+		MsgBox, 16, digiLog4OM © IZ3XNJ, digiLog4OM © IZ3XNJ`nSetup Callsign Field KO
 		ExitApp
 	}
 return
@@ -925,10 +940,14 @@ GetLog4OmCtrl(txtLbl)
 		; retrieve text from control
 		ControlGetText, txtRead,, ahk_id %A_LoopField%
 		if (txtRead = txtLbl)
+		{
 			ctrlName := Control_GetClassNN(hWnd, A_LoopField) 
+			break
+		}
 	} ; Loop, Parse, controls, `n
 	return ctrlName
 }
+
 ; +--------------------+
 ; | Control_GetClassNN |
 ; +--------------------+
@@ -943,13 +962,3 @@ Control_GetClassNN(hWnd, hCtrl)
 	StringGetPos, P, CN, `n, L%ErrorLevel%
 	Return SubStr( CN, P+2, InStr( CN, LF, 0, P+2 ) -P-2 )
 }
-
-; +----------+
-; | SetPSK31 |
-; +----------+
-;SetPSK31:
-	; activates the window  and makes it foremost
-;	WinActivate, %lblLog4OM% 
-
-;	ControlSend, %clsNNMode%, {Home}PPPPPPPPPP , %lblLog4OM% 
-;return
