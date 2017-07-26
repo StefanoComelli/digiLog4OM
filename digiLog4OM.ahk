@@ -242,6 +242,14 @@ EndApp:
 			Rig.Mode := 33554432	
 	}	
 	
+	if (isFldigi())
+	{
+		; activates the window  and makes it foremost
+		WinActivate, %lblLog4OM% 
+		; click CLR button to clear previous call
+		ControlClick, CLR, %lblLog4OM% 
+	}
+
 	Gosub, StopOmniRig
 
 	ExitApp
@@ -471,6 +479,13 @@ ReadFreq:
 			SoundSetWaveVolume, %volWave%, %soundCard%
 			Gosub, SetSoundInfo
 		} ; if (autoSound = "Y")
+		if (isFldigi())
+		{
+			; activates the window  and makes it foremost
+			WinActivate, %lblLog4OM% 
+			; click CLR button to clear previous call
+			ControlClick, CLR, %lblLog4OM% 
+		}
 	} ; if (nBand <> band)
 return
 
