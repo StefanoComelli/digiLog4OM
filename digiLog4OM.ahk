@@ -54,7 +54,7 @@
 		OnExit, EndApp
 		
 		; timer
-		SetTimer, CtrlApps, 10000
+		SetTimer, CtrlApps, %ctrlAppsMsecs%
 		
 		; read frequency for the first time
 		if (autoSound = "Y")
@@ -152,7 +152,15 @@ Config:
 		traySecs := 1
 		IniWrite, %traySecs%, digiLog4OM.ini, config, traySecs
 	}
-	
+
+	;ctrlAppsMsecs
+	IniRead, ctrlAppsMsecs, digiLog4OM.ini, config, ctrlAppsMsecs, UNDEF_INI
+	if (ctrlAppsMsecs = "UNDEF_INI")
+	{
+		ctrlAppsMsecs := 5000
+		IniWrite, %ctrlAppsMsecs%, digiLog4OM.ini, config, ctrlAppsMsecs
+	}
+
 	; [sound]
 	
 	; autoSound
