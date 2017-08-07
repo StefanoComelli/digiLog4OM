@@ -463,38 +463,42 @@ ReadFreq:
 	; if on TX, rx frequency is 0, so read from tx fequency
 	if (freq = 0)
 			freq := Rig.GetTxFrequency / 1000	
-	; which band ?
-	nBand := GetBand(freq)
-
-	; is band changed?
-	if (nBand <> band)
+	
+	if (freq <> 0)
 	{
-		band := nBand
-		
-		; goes in PM_DIG_U = 134217728 (&H8000000)
-		Rig.Mode := 134217728 
+		; which band ?
+		nBand := GetBand(freq)
 
-		if (autoSound = "Y")
+		; is band changed?
+		if (nBand <> band)
 		{
-			maxVol := GetMaxVol(band)
-			defVol := GetDefVol(band)
+			band := nBand
+			
+			; goes in PM_DIG_U = 134217728 (&H8000000)
+			Rig.Mode := 134217728 
+
+			if (autoSound = "Y")
+			{
+				maxVol := GetMaxVol(band)
+				defVol := GetDefVol(band)
+				if (isFldigi())
+				{
+					defFreq := GetDefFreq(band)
+					Rig.SetSimplexMode(defFreq * 1000)
+				}
+				volWave := defVol
+				SoundSetWaveVolume, %volWave%, %soundCard%
+				Gosub, SetSoundInfo
+			} ; if (autoSound = "Y")
 			if (isFldigi())
 			{
-				defFreq := GetDefFreq(band)
-				Rig.SetSimplexMode(defFreq * 1000)
+				; activates the window  and makes it foremost
+				WinActivate, %lblLog4OM% 
+				; click CLR button to clear previous call
+				ControlClick, CLR, %lblLog4OM% 
 			}
-			volWave := defVol
-			SoundSetWaveVolume, %volWave%, %soundCard%
-			Gosub, SetSoundInfo
-		} ; if (autoSound = "Y")
-		if (isFldigi())
-		{
-			; activates the window  and makes it foremost
-			WinActivate, %lblLog4OM% 
-			; click CLR button to clear previous call
-			ControlClick, CLR, %lblLog4OM% 
-		}
-	} ; if (nBand <> band)
+		} ; if (nBand <> band)
+	} ; if (freq <> 0)
 return
 
 ; +--------+
