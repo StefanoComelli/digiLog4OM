@@ -15,7 +15,7 @@
 	
 	#Include Class_SQLiteDB.ahk
 
-	version := "1.0.0"   
+	version := "2.0.0"   
 	
 	; config
 	Gosub, Config
@@ -98,9 +98,28 @@ Setup:
 			MsgBox, 16, digiLog4OM © IZ3XNJ, Error in clsNNMode
 			ExitApp
 		}
+		
+		; activates the window  and makes it foremost
+		WinActivate, %lblLog4OM% 
+		; click CLR button to clear previous call
+		ControlClick, CLR, %lblLog4OM%		
+		
+		;send your call
+		SendInput {Raw}XNJ
+		
+		; wait a moment
+		Sleep 1000
+		
+		; read your call to detect control
+		clsNNCall := GetLog4OmCtrl("XNJ")
+		if (clsNNCall = "")
+		{
+			MsgBox, 16, digiLog4OM © IZ3XNJ, digiLog4OM © IZ3XNJ`nErrore clsNNCall
+			Gosub, SetupLog4OM 
+		}	
+		; click CLR button to clear previous call
+		ControlClick, CLR, %lblLog4OM%		
 
-		ctrlOutbound = WindowsForms10.BUTTON.app.0.39490e2_r12_ad13
-		ctrlInbound = WindowsForms10.BUTTON.app.0.39490e2_r12_ad12
 	}
 return
 
@@ -137,14 +156,21 @@ Config:
 		Gosub, SetupLog4OM 
 	}
 	
-	; clsNNCall
-	IniRead, clsNNCall, digiLog4OM.ini, config, clsNNCall, UNDEF_INI
-	if (clsNNCall = "UNDEF_INI")
+	;ctrlOutbound
+	IniRead, ctrlOutbound, digiLog4OM.ini, config, ctrlOutbound, UNDEF_INI
+	if (ctrlOutbound = "UNDEF_INI")
 	{
-		MsgBox, 16, digiLog4OM © IZ3XNJ, Error in digiLog4OM.ini`nclsNNCall
-		Gosub, SetupLog4OM 
+		MsgBox, 16, digiLog4OM © IZ3XNJ, Error in digiLog4OM.ini`nctrlOutbound
 	}
 	
+	;ctrlInbound
+	IniRead, ctrlInbound, digiLog4OM.ini, config, ctrlInbound, UNDEF_INI
+	if (ctrlInbound = "UNDEF_INI")
+	{
+		MsgBox, 16, digiLog4OM © IZ3XNJ, Error in digiLog4OM.ini`nctrlOutbound
+		;Gosub, SetupLog4OM 
+	}
+
 	;traySecs
 	IniRead, traySecs, digiLog4OM.ini, config, traySecs, UNDEF_INI
 	if (traySecs = "UNDEF_INI")
@@ -658,6 +684,25 @@ StopDB:
 	MyDB.CloseDB()
 return
 
+
+; +-------------+
+; | WINDOWS + Q |
+; +-------------+
+#q::
+	if (isFldigi() and autoSpot="Y")
+	{
+		InputBox, QsyFreq , FlDigi QSY, Frequency
+		if (QsyFreq is number)
+		{
+			if (QsyFreq > sweetSpot / 1000)
+			{
+				newFreq := QsyFreq * 1000 - sweetSpot		
+				Rig.SetSimplexMode(newFreq)
+			}
+		}
+	}
+return
+
 ; +---------+
 ; | setSpot |
 ; +---------+
@@ -665,13 +710,179 @@ setSpot:
 	; set sweet spot frequency
 	if (autoSpot="Y")
 	{
-		InputBox, spotFreq , FlDigi QSY, Frequency
-		if (spotFreq > sweetSpot / 1000)
+		; create GUI
+		Gui, Add, Button, x0 y0 w36 h29 , 7
+		Gui, Add, Button, x0 y30 w36 h29 , 4
+		Gui, Add, Button, x0 y60 w36 h29 , 1
+		Gui, Add, Button, x0 y90 w36 h29 , <-
+		Gui, Add, Button, x39 y0 w36 h29 , 8
+		Gui, Add, Button, x39 y30 w36 h29 , 5
+		Gui, Add, Button, x39 y60 w36 h29 , 2
+		Gui, Add, Button, x39 y90 w36 h29 , 0
+		Gui, Add, Button, x78 y0 w36 h29 , 9
+		Gui, Add, Button, x78 y30 w36 h29 , 6
+		Gui, Add, Button, x78 y60 w36 h29 , 3
+		Gui, Add, Button, x78 y90 w36 h29 , .
+		Gui, Add, Button, x0 y120 w36 h29 , OK
+		Gui, Add, Button, x78 y120 w36 h29 , EXIT
+		Gui, Add, Button, x39 y120 w36 h29 , CLR
+		Gui, Add, Text, vQsyFreq xCenter y150 w114 h29 +Center, 
+		Gui, -SysMenu
+		Gui, Show, w114 h165, digiLog4OM QSY
+	}
+return
+
+; +----------+
+; | Button 0 |
+; +----------+
+Button0:
+	GuiControlGet, QsyFreq 
+	gQsyFreq=%QsyFreq%0
+	GuiControl,,QsyFreq, %gQsyFreq%
+return
+
+; +----------+
+; | Button 1 |
+; +----------+
+Button1:
+	GuiControlGet, QsyFreq 
+	gQsyFreq=%QsyFreq%1
+	GuiControl,,QsyFreq, %gQsyFreq%
+return
+
+; +----------+
+; | Button 2 |
+; +----------+
+Button2:
+	GuiControlGet, QsyFreq 
+	gQsyFreq=%QsyFreq%2
+	GuiControl,,QsyFreq, %gQsyFreq%
+return
+
+; +----------+
+; | Button 3 |
+; +----------+
+Button3:
+	GuiControlGet, QsyFreq 
+	gQsyFreq=%QsyFreq%3
+	GuiControl, ,QsyFreq, %gQsyFreq%
+return
+
+; +----------+
+; | Button 4 |
+; +----------+
+Button4:
+	GuiControlGet, QsyFreq 
+	gQsyFreq=%QsyFreq%4
+	GuiControl,,QsyFreq, %gQsyFreq%
+return
+
+; +----------+
+; | Button 5 |
+; +----------+
+Button5:
+	GuiControlGet, QsyFreq 
+	gQsyFreq=%QsyFreq%5
+	GuiControl,,QsyFreq, %gQsyFreq%
+return
+
+; +----------+
+; | Button 6 |
+; +----------+
+Button6:
+	GuiControlGet, QsyFreq 
+	gQsyFreq=%QsyFreq%6
+	GuiControl,,QsyFreq, %gQsyFreq%
+return
+
+; +----------+
+; | Button 7 |
+; +----------+
+Button7:
+	GuiControlGet, QsyFreq 
+	gQsyFreq=%QsyFreq%7
+	GuiControl,,QsyFreq, %gQsyFreq%
+return
+
+; +----------+
+; | Button 8 |
+; +----------+
+Button8:
+	GuiControlGet, QsyFreq 
+	gQsyFreq=%QsyFreq%8
+	GuiControl,,QsyFreq, %gQsyFreq%
+return
+
+; +----------+
+; | Button 9 |
+; +----------+
+Button9:
+	GuiControlGet, QsyFreq 
+	gQsyFreq=%QsyFreq%9
+	GuiControl,,QsyFreq, %gQsyFreq%
+return
+
+; +----------+
+; | Button . |
+; +----------+
+Button.:
+	GuiControlGet, QsyFreq 
+	FoundPos := InStr(QsyFreq, ".")
+	
+	if (FoundPos=0)
+	{
+		gQsyFreq=%QsyFreq%.
+		GuiControl,,QsyFreq, %gQsyFreq%
+	}
+return
+
+; +------------+
+; | Button  <- |
+; +------------+
+Button<-:
+	GuiControlGet, QsyFreq 
+	Length := StrLen(QsyFreq)
+	if (Length>=1)
+	{
+		NewStr := SubStr(QsyFreq, 1 , Length - 1)
+		GuiControl,,QsyFreq, %NewStr%
+	}
+return 
+
+; +------------+
+; | Button CLR |
+; +------------+
+ButtonCLR:
+		GuiControl,,QsyFreq, 
+return
+
+; +-----------+
+; | Button OK |
+; +-----------+
+ButtonOK:
+	GuiControlGet, QsyFreq 
+	if (QsyFreq is number)
+	{
+		if (QsyFreq > sweetSpot / 1000)
 		{
-			newFreq := spotFreq * 1000 - sweetSpot		
+			newFreq := QsyFreq * 1000 - sweetSpot		
 			Rig.SetSimplexMode(newFreq)
 		}
 	}
+	Gui, Destroy
+return
+
+; +-------------+
+; | Button EXIT |
+; +-------------+
+ButtonEXIT:
+	Gui, Destroy
+return
+
+; +----------+
+; | GuiClose |
+; +----------+
+GuiClose:
 return
 
 ; +------------+
@@ -937,8 +1148,8 @@ SetupLog4OM:
 		ControlClick, CLR, %lblLog4OM% 
 		
 		flgCallsignOk := true
-		IniWrite, %clsNNCall%, digiLog4OM.ini, config, clsNNCall
-		gosub, ReReadIni
+		;IniWrite, %clsNNCall%, digiLog4OM.ini, config, clsNNCall
+		;gosub, ReReadIni
 	}
 	else
 	{
